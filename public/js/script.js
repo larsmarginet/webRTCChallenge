@@ -5,7 +5,11 @@
 
     const $myVideo = document.getElementById('myVideo');
     const $otherVideo = document.getElementById('otherVideo');
+    const $myName = document.querySelector('.videoView__videos__myName');
+    const $otherName = document.querySelector('.videoView__videos__otherName');
     const $peerSelect = document.querySelector('.videoView__aside__clients');
+    const $controls = document.querySelector('.videoView__videos__controls');
+    const $endCall = document.querySelector('.videoView__videos__controls__end');
     const $login = document.querySelector('.loginView');
     const $form = document.querySelector('.loginView__innerWrapper__form');
 
@@ -39,8 +43,7 @@
         });
         socket.emit('name', name);
         socket.on('name', name => {
-            console.log("new name " + name)
-            document.querySelector('.videoView__videos__myName').textContent = name;
+            $myName.textContent = name;
             
         });
         socket.on('clients', updatePeerList);
@@ -50,7 +53,9 @@
             }
         });
         socket.on('signal', async (myId, signal, peerId) => {
-            document.querySelector('.videoView__videos__otherName').textContent = clientList[peerId].name;
+            $otherName.textContent = clientList[peerId].name;
+            $controls.classList.add("videoView__videos__controls--visible");
+            $endCall.addEventListener('click', handleEndCall)
             console.log(`Received signal from ${peerId}`);
             console.log(signal);
             if (peer) {
@@ -74,7 +79,7 @@
                 $li.classList.add('videoView__aside__clients__client');
                 $li.innerHTML = `
                         <p>${client.name}</p>
-                        <button data-id="${clientId}" class="videoView__aside__clients__client__calbtn">
+                        <button data-id="${clientId}" class="videoView__aside__clients__client__callbtn">
                             <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <circle cx="12.5" cy="12.5" r="12.5" fill="#6FCF97"/>
                                 <path d="M8.42886 8.42857H14.1426C14.9311 8.42857 15.5714 9.068 15.5714 9.85743V15.5711C15.5714 16.3597 14.932 17 14.1426 17H8.42886C7.64029 17 7 16.3606 7 15.5711V9.85743C7 9.06886 7.63943 8.42857 8.42886 8.42857Z" fill="white"/>
@@ -82,7 +87,7 @@
                             </svg>
                         </button>
                     `;
-                $li.querySelector('.videoView__aside__clients__client__calbtn').addEventListener('click', callSelectedPeer);
+                $li.querySelector('.videoView__aside__clients__client__callbtn').addEventListener('click', callSelectedPeer);
                 $peerSelect.appendChild($li);
             }
         }
@@ -106,8 +111,6 @@
             id: peerId
         };
         peer.on('signal', data => {
-            console.log("data")
-            console.log(data)
             socket.emit('signal', peerId, data);
         });
         peer.on('stream', stream => {
@@ -117,11 +120,21 @@
             console.log('closed');
             peer.destroy();
             peer = null;
+            $controls.classList.remove('videoView__videos__controls--visible');
+            $otherName.textContent = '';
+            $otherVideo.srcObject.getVideoTracks().forEach(track => {
+                track.stop()
+                video.srcObject.removeTrack(track);
+            });
         });
         peer.on('error', () => {
             console.log('error');
         });
     };
+
+    const handleEndCall = () => {
+        peer.destroy();
+    }
 
     init();
 }

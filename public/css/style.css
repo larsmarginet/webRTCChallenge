@@ -163,11 +163,28 @@ h1 {
     align-items: center;
 }
 
-.videoView__aside__clients__client__calbtn {
+.videoView__aside__clients__client__callbtn {
     background: none;
     border: none;
     outline: none;
     margin-left: 1rem;
+    cursor: pointer;
+}
+
+.videoView__videos__controls {
+    position: absolute;
+    bottom: 5rem;
+    left: 0;
+    width: 100%;
+    display: none;
+}
+
+.videoView__videos__controls--visible {
+    display: flex;
+    justify-content: center;
+}
+
+.videoView__videos__controls__end{
     cursor: pointer;
 }
 
