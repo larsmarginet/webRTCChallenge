@@ -20,13 +20,21 @@
         </div>
     </div>
 
-    
+
     <div class="videoView">
-        <h1>No Bore</h1>
-        <select id="otherSocketIds"></select><br>
-        <div class="videos">
-            <video id="myVideo" autoplay playsinline></video>
-            <video id="otherVideo" autoplay playsinline></video>
+        <div class="videoView__aside">
+            <h1>No Bore</h1>
+            <ul class="videoView__aside__clients"></ul>
+        </div>
+        <div class="videoView__videos">
+            <div class="videoView__videos__otherWrapper">
+                <video class="videoView__videos__otherVideo" id="otherVideo" autoplay playsinline></video>
+                <p class="videoView__videos__otherName">[name]</p>
+            </div>
+            <div class="videoView__videos__myWrapper">
+                <video class="videoView__videos__myVideo" id="myVideo" autoplay playsinline></video>
+                <p class="videoView__videos__myName">[name]</p>
+            </div>
         </div>
     </div>
     

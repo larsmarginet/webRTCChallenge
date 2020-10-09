@@ -1,97 +1,127 @@
 {
-    const $video = document.getElementById('myVideo');
+    let isLoggedIn = false;
+    let name;
+
+
+    const $myVideo = document.getElementById('myVideo');
     const $otherVideo = document.getElementById('otherVideo');
-    const $otherSocketIds = document.getElementById('otherSocketIds');
+    const $peerSelect = document.querySelector('.videoView__aside__clients');
+    const $login = document.querySelector('.loginView');
+    const $form = document.querySelector('.loginView__innerWrapper__form');
+
     let socket;
-    let peer;
-    let connectedPeerId;
     let myStream;
+    let peer;
+    let clientList = {};
 
     const init = async () => {
-        myStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
-        $video.srcObject = myStream;
+        $form.addEventListener('submit', async e => {
+            e.preventDefault();
+            name = e.target.querySelector('.loginView__innerWrapper__form__input').value;
+            isLoggedIn = true;
+            if (isLoggedIn) {
+                initSocket();
+                console.log("submitted form")
+                const constraints = { audio: false, video: { width: 1280, height: 720 } };
+                myStream = await navigator.mediaDevices.getUserMedia(constraints);
+                $myVideo.srcObject = myStream;
+                $myVideo.onloadedmetadata = () => $myVideo.play();
+                $login.style.display = "none";
+            }
+        });
+    };
 
-        $otherSocketIds.addEventListener('input', callSelectedPeer)
 
-        socket = io();
+    const initSocket = () => {
+        socket = io.connect('/');
         socket.on('connect', () => {
-            console.log('connected');
-        })
-        socket.on('clients', clients => {
-            console.log(clients);
-            $otherSocketIds.innerHTML = '<option value="">---select another peer---</option>';
-            for (const otherSocketId in clients) {
-                if (clients.hasOwnProperty(otherSocketId)) {
-                    const otherClient = clients[otherSocketId];
-                    if (otherClient.id !== socket.id) {
-                        const $option = document.createElement(`option`);
-                        $option.value = otherClient.id;
-                        $option.textContent = otherClient.id;
-                        $otherSocketIds.appendChild($option);
-                    }
-                }
-            }
-        })
-        socket.on('signal', async (myId, signal, peerId) => {
-            if (signal.type === 'offer' && !peer) {
-                await handlePeerOffer(myId, signal, peerId)
-            }
-            peer.signal(signal);
+            console.log(socket);
         });
-
-        socket.on(('client-disconnect', socketId => {
-            connectedPeerId == peerId;
-            if (peer) {
+        socket.emit('name', name);
+        socket.on('name', name => {
+            console.log("new name " + name)
+            document.querySelector('.videoView__videos__myName').textContent = name;
+            
+        });
+        socket.on('clients', updatePeerList);
+        socket.on('client-disconnect', (client) => {
+            if (peer && peer.data.id === client.id) {
                 peer.destroy();
-                peer = null;
             }
-        }))
-    }
+        });
+        socket.on('signal', async (myId, signal, peerId) => {
+            document.querySelector('.videoView__videos__otherName').textContent = clientList[peerId].name;
+            console.log(`Received signal from ${peerId}`);
+            console.log(signal);
+            if (peer) {
+                peer.signal(signal);
+            } else if (signal.type === 'offer') {
+                createPeer(false, peerId);
+                peer.signal(signal);
+            }
+        });
+    };
 
-    const callSelectedPeer = () => {
-        if($otherSocketIds.value === "") {
-            return
+    const updatePeerList = (clients) => {
+        clientList = clients;
+        $peerSelect.innerHTML = '';
+        for (const clientId in clients) {
+            const isMyOwnId = (clientId === socket.id);
+            if (clients.hasOwnProperty(clientId) && !isMyOwnId) {  
+                const client = clients[clientId];
+                const $li = document.createElement('li');
+                $li.setAttribute('data-id', clientId);
+                $li.classList.add('videoView__aside__clients__client');
+                $li.innerHTML = `
+                        <p>${client.name}</p>
+                        <button data-id="${clientId}" class="videoView__aside__clients__client__calbtn">
+                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12.5" cy="12.5" r="12.5" fill="#6FCF97"/>
+                                <path d="M8.42886 8.42857H14.1426C14.9311 8.42857 15.5714 9.068 15.5714 9.85743V15.5711C15.5714 16.3597 14.932 17 14.1426 17H8.42886C7.64029 17 7 16.3606 7 15.5711V9.85743C7 9.06886 7.63943 8.42857 8.42886 8.42857Z" fill="white"/>
+                                <path d="M12.4892 13.3117L17.9432 16.4763C18.4061 16.7446 19.0001 16.4197 19.0001 15.8789V9.54971C19.0001 9.00971 18.4061 8.684 17.9432 8.95314L12.4892 12.1177C12.3839 12.1778 12.2964 12.2647 12.2355 12.3695C12.1746 12.4744 12.1426 12.5935 12.1426 12.7147C12.1426 12.8359 12.1746 12.955 12.2355 13.0599C12.2964 13.1647 12.3839 13.2516 12.4892 13.3117V13.3117Z" fill="white"/>
+                            </svg>
+                        </button>
+                    `;
+                $li.querySelector('.videoView__aside__clients__client__calbtn').addEventListener('click', callSelectedPeer);
+                $peerSelect.appendChild($li);
+            }
         }
-        console.log(`call selected peer= ${$otherSocketIds.value}`)
-        callPeer(otherSocketIds.value);
-    }
+    };
 
-    const callPeer = async peerId => {
-        peer = new SimplePeer({ initiator: true, stream: myStream });
-        connectedPeerId = peerId;
-        peer.on('signal', signal => {
-            socket.emit('signal', peerId, signal);
-        });
-        peer.on('stream', stream => {
-            $otherVideo.srcObject = stream;
-        });
-    }
-
-    const handlePeerAnswer = async (myId, answer, peerId) => {
-        console.log(`Recieved anwser from ${peerId}`);
-        console.log(answer);
-        await peerConnection.setRemoteDescription(answer);
-    }
-
-    const handlePeerIce = async (myId, candidate, peerId) => {
-        console.log(`Recieved candidate from ${peerId}`)
-        console.log(candidate);
-        if(!candidate) {
+    const callSelectedPeer = async e => {
+        const $client = e.currentTarget.dataset.id;
+        if (!$client) {
+            if (peer) {
+            peer.destroy();
             return;
+            }
         }
-        await peerConnection.addIceCandidate(candidate);
-    }
+        console.log('call selected peer', $client);
+        createPeer(true, $client);
+    };
 
-    const handlePeerOffer = async (myId, offer, peerId) => {
-        peer = new SimplePeer({ initiator: false, stream: myStream});
-        connectedPeerId = peerId;
-        peer.on('signal', signal => {
-            socket.emit('signal', peerId, signal);
+    const createPeer = (initiator, peerId) => {
+        peer = new SimplePeer({ initiator, stream: myStream });
+            peer.data = {
+            id: peerId
+        };
+        peer.on('signal', data => {
+            console.log("data")
+            console.log(data)
+            socket.emit('signal', peerId, data);
         });
         peer.on('stream', stream => {
             $otherVideo.srcObject = stream;
         });
-    }
+        peer.on('close', () => {
+            console.log('closed');
+            peer.destroy();
+            peer = null;
+        });
+        peer.on('error', () => {
+            console.log('error');
+        });
+    };
 
     init();
 }

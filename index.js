@@ -26,21 +26,28 @@ const io = require('socket.io')(server);
 const clients = {};
 io.on('connection', socket => {
   clients[socket.id] = { id: socket.id };
+  socket.on('name', name => {
+    console.log('id', socket.id);
+    console.log('name', name);
+    clients[socket.id].name = name;
+    console.log(clients[socket.id]);
+    console.log(clients);
+    socket.emit('name', name);
+    io.emit('clients', clients);
+  });
 
   socket.on('disconnect', () => {
+    io.emit('client-disconnect', clients[socket.id]);
     delete clients[socket.id];
     io.emit('clients', clients);
-    io.emit('clients-disconnect', socket.id);
   });
 
   socket.on('signal', (peerId, signal) => {
-    if(!clients[peerId]) {
-      return;
-    }
     console.log(`Received signal from ${socket.id} to ${peerId}`);
     io.to(peerId).emit('signal', peerId, signal, socket.id);
-  })
-
+  });
 
   io.emit('clients', clients);
+  io.emit('client-connection', clients[socket.id]);
+
 });
