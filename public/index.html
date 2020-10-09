@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No Bore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="loginView">
+        <div class="loginView__innerWrapper">
+            <h2 class="loginView__innerWrapper__title">Login</h2>
+            <form class="loginView__innerWrapper__form">
+                <label class="loginView__innerWrapper__form__label" for="name" >Name:</label>
+                <input class="loginView__innerWrapper__form__input" type="text" id="name" placeholder="John Doe" name="name">
+                <button class="loginView__innerWrapper__form__submit" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    
+    <div class="videoView">
+        <h1>No Bore</h1>
+        <select id="otherSocketIds"></select><br>
+        <div class="videos">
+            <video id="myVideo" autoplay playsinline></video>
+            <video id="otherVideo" autoplay playsinline></video>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.7.2/simplepeer.min.js" integrity="sha512-RZlErEuUwWv3EhGNhvni9vinu0QPwNU0OyWAlhTeezEToTZu/C+/Mn7ItRFmpcf8MTK0J2kRalSfzrpQqF7wJQ==" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./js/script.js"></script>
+</body>
+</html>
