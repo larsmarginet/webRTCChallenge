@@ -27,11 +27,8 @@ const clients = {};
 io.on('connection', socket => {
   clients[socket.id] = { id: socket.id };
   socket.on('name', name => {
-    console.log('id', socket.id);
     console.log('name', name);
     clients[socket.id].name = name;
-    console.log(clients[socket.id]);
-    console.log(clients);
     socket.emit('name', name);
     io.emit('clients', clients);
   });
