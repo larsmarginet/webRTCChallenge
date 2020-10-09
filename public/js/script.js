@@ -26,7 +26,7 @@
             if (isLoggedIn) {
                 initSocket();
                 console.log("submitted form")
-                const constraints = { audio: false, video: { width: 1280, height: 720 } };
+                const constraints = { audio: true, video: { width: 1280, height: 720 } };
                 myStream = await navigator.mediaDevices.getUserMedia(constraints);
                 $myVideo.srcObject = myStream;
                 $myVideo.onloadedmetadata = () => $myVideo.play();
