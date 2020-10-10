@@ -1,4 +1,25 @@
+import * as THREE from './three.module.js';
 {
+    
+
+    // Init Three scene
+    const canvas = document.querySelector('#c');
+    const renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
+    const fov = 2;
+    const aspect = 2; // the canvas default
+    const near = 0.5;
+    const far = 500;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.z = 500;
+    const scene = new THREE.Scene();
+    const light = new THREE.DirectionalLight( 0xffffff );
+	light.position.set( 0.5, 1, 1 ).normalize();
+    scene.add( light );
+    const geometry = new THREE.PlaneGeometry( 25, 15, 1 );
+
+    let cube;
+    
+
     let isLoggedIn = false;
     let name;
 
@@ -33,6 +54,7 @@
                 $login.style.display = "none";
             }
         });
+        requestAnimationFrame(render);
     };
 
 
@@ -105,6 +127,63 @@
         createPeer(true, $client);
     };
 
+
+
+
+    const fragmentShader = `
+        #include <common>
+        varying vec2 vUv;
+        uniform vec3 iResolution;
+        uniform float iTime;
+        uniform sampler2D iChannel0;  
+        uniform sampler2D iChannel1;  
+
+        
+
+        void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+            vec2 uv = fragCoord.xy / iResolution.xy;
+            float scale = .5 + .5 * (1.0 + sin(iTime * .5));
+            vec4 c = texture(iChannel0, (.5 + -.5 * 1.0 +  uv * 1.0), 1.0);
+            // c.r = c.r * .5 + c.r * 1.2 * sin(iTime * 2.0);
+            // c.g = c.g * .5 + c.g * 1.2 * sin(iTime * 1.5);
+            // c.b = c.b * .5 + c.b * 1.2 * sin(iTime * 1.25);
+            fragColor = c;
+            
+            vec2 offset = texture(iChannel1, vec2(fract(iTime * 2.0), fract(iTime)), 1.0).xy;
+            
+            fragColor += texture(iChannel1, offset + uv, .1);
+        }
+
+        void main() {
+            mainImage(gl_FragColor, vUv * iResolution.xy);
+        }
+    `;
+
+    const vertexShader = `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }
+    `;
+
+    const videoTexture = new THREE.VideoTexture( $otherVideo );
+    const imageTexture = new THREE.TextureLoader().load( "../assets/noise.jpg" );
+
+    const uniforms = {
+        iTime: { value: 0 },
+        iResolution: { value: new THREE.Vector3(1, 1, 1) },
+        iChannel0: { value: videoTexture },
+        iChannel1: { value: imageTexture }
+    };
+
+    const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms,
+    });
+
+
     const createPeer = (initiator, peerId) => {
         peer = new SimplePeer({ initiator, stream: myStream });
             peer.data = {
@@ -115,6 +194,12 @@
         });
         peer.on('stream', stream => {
             $otherVideo.srcObject = stream;
+           
+            // const parameters = { color: 0xffffff, map: texture };
+            // const material = new THREE.MeshBasicMaterial(parameters);
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            console.log("hellp")
         });
         peer.on('close', () => {
             console.log('closed');
@@ -124,7 +209,7 @@
             $otherName.textContent = '';
             $otherVideo.srcObject.getVideoTracks().forEach(track => {
                 track.stop()
-                video.srcObject.removeTrack(track);
+                $otherVideo.srcObject.removeTrack(track);
             });
         });
         peer.on('error', () => {
@@ -135,6 +220,33 @@
     const handleEndCall = () => {
         peer.destroy();
     }
+
+
+    const render = (time) => {
+        time *= 0.001;
+        if (resizeRendererToDisplaySize(renderer)) {
+            const canvas = renderer.domElement;
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+        }
+        uniforms.iTime.value = time;
+        renderer.render(scene, camera);
+        requestAnimationFrame(render);
+    };
+
+    const resizeRendererToDisplaySize = (renderer) => {
+        const canvas = renderer.domElement;
+        const pixelRatio = window.devicePixelRatio;
+        const width  = canvas.clientWidth  * pixelRatio | 0;
+        const height = canvas.clientHeight * pixelRatio | 0;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(width, height, false);
+        }
+        return needResize;
+    }
+  
+    
 
     init();
 }
