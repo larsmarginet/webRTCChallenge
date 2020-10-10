@@ -60,16 +60,22 @@ import * as THREE from './three.module.js';
 
     const randomBoolean = () => Math.random() >= 0.5;
 
-    const audioRandomIntervals = audio => {
-        if( audio === false ) {
+    let interval
+
+    const audioRandomIntervals = noise => {
+        if( noise === false ) {
             $otherVideo.muted = false;
+            //console.log(interval);
+            // if(interval) {
+            //     console.log(interval);
+            // }
+            clearInterval(interval);
         } else {
-            window.setInterval(function(){
+            interval = setInterval(() => {
                 $otherVideo.muted = randomBoolean();
             }, 100);
-            
+            console.log(interval);
         }
-        
     }
 
 
@@ -85,6 +91,7 @@ import * as THREE from './three.module.js';
         socket.on('noise', noise => {
             console.log(noise);
             audioRandomIntervals(noise);
+            // clearInterval(interval);
             uniforms.playTexture.value = noise;
         })
         socket.on('clients', updatePeerList);
@@ -159,22 +166,13 @@ import * as THREE from './three.module.js';
         uniform sampler2D iChannel1;  
         uniform bool playTexture; 
 
-
-
         void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
             vec2 uv = fragCoord.xy / iResolution.xy;
-            float scale = .5 + .5 * (1.0 + sin(iTime * .5));
             vec4 c = texture(iChannel0, (.5 + -.5 * 1.0 +  uv * 1.0), 1.0);
-            // c.r = c.r * .5 + c.r * 1.2 * sin(iTime * 2.0);
-            // c.g = c.g * .5 + c.g * 1.2 * sin(iTime * 1.5);
-            // c.b = c.b * .5 + c.b * 1.2 * sin(iTime * 1.25);
             fragColor = c;
-            
             vec2 offset = texture(iChannel1, vec2(fract(iTime * 2.0), fract(iTime)), 1.0).xy;
-            
             (playTexture == true) ? fragColor += texture(iChannel1, offset + uv, .1) : fragColor = c;
         }
-        
 
         void main() {
             mainImage(gl_FragColor, vUv * iResolution.xy);
