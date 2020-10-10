@@ -17,7 +17,7 @@ import * as THREE from './three.module.js';
     scene.add( light );
     const geometry = new THREE.PlaneGeometry( 25, 15, 1 );
 
-    let cube;
+    // let cube;
     
 
     let isLoggedIn = false;
@@ -147,6 +147,48 @@ import * as THREE from './three.module.js';
     };
 
 
+    // #include <common>
+    // varying vec2 vUv;
+    // uniform vec3 iResolution;
+    // uniform float iTime;
+    // uniform sampler2D iChannel0;  
+    // uniform sampler2D iChannel1;  
+    // uniform bool playTexture; 
+
+    // void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+    //      vec2 uv = fragCoord.xy / iResolution.xy;
+    //      vec4 c = TEXTURE2D(iChannel0, (.5 + -.5 * 1.0 +  uv * 1.0), 1.0);
+    //      fragColor = c;
+    //      vec2 offset = TEXTURE2D(iChannel1, vec2(fract(iTime * 2.0), fract(iTime)), 1.0).xy;
+    //      (playTexture == true) ? fragColor += TEXTURE2D(iChannel1, offset + uv, .1) : fragColor = c;
+    // }
+
+    // void main() {
+    //     mainImage(gl_FragColor, vUv * iResolution.xy);
+    // }
+
+
+
+    // #include <common>
+    //     varying vec2 vUv;
+    //     uniform vec3 iResolution;
+    //     uniform float iTime;
+    //     uniform sampler2D iChannel0;  
+    //     uniform sampler2D iChannel1;  
+    //     uniform bool playTexture; 
+        
+    //     void mainImage( out vec4 fragColor, in vec2 fragCoord )
+    //     {
+            
+    //         vec2 uv = fragCoord.xy / iResolution.xy;
+    //         float r = fract(sin(dot((uv*iTime).xy ,vec2(12.9898,78.233))) * 43758.5453);
+    //         vec4 VI = gvec4 texture(iChannel0,uv);
+    //         VI*=r; 
+    //         fragColor = vec4(VI);
+    //     }
+    //     void main() {
+    //         mainImage(gl_FragColor, vUv * iResolution.xy);
+    //     }
 
 
     const fragmentShader = `
@@ -158,14 +200,22 @@ import * as THREE from './three.module.js';
         uniform sampler2D iChannel1;  
         uniform bool playTexture; 
 
+        //Based on donmilham's shader on Shadertoy: https://www.shadertoy.com/view/MlBGRh
+
+        //Checks which version because it otherwise doenst work on apple devices...
+        #if __VERSION__ < 130
+        #define TEXTURE2D texture2D
+        #else
+        #define TEXTURE2D texture
+        #endif
+        
         void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
             vec2 uv = fragCoord.xy / iResolution.xy;
-            vec4 c = texture(iChannel0, (.5 + -.5 * 1.0 +  uv * 1.0), 1.0);
+            vec4 c = TEXTURE2D(iChannel0, (.5 + -.5 * 1.0 +  uv * 1.0), 1.0);
             fragColor = c;
-            vec2 offset = texture(iChannel1, vec2(fract(iTime * 2.0), fract(iTime)), 1.0).xy;
-            (playTexture == true) ? fragColor += texture(iChannel1, offset + uv, .1) : fragColor = c;
+            vec2 offset = TEXTURE2D(iChannel1, vec2(fract(iTime * 2.0), fract(iTime)), 1.0).xy;
+            (playTexture == true) ? fragColor += TEXTURE2D(iChannel1, offset + uv, .1) : fragColor = c;
         }
-
         void main() {
             mainImage(gl_FragColor, vUv * iResolution.xy);
         }
@@ -207,7 +257,7 @@ import * as THREE from './three.module.js';
         });
         peer.on('stream', stream => {
             $otherVideo.srcObject = stream;
-            cube = new THREE.Mesh(geometry, material);
+            const cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
         });
         peer.on('noise', noise => {

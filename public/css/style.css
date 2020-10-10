@@ -207,4 +207,15 @@ h1 {
         height: 90vh;
         padding: 2rem;
     }
+    h1 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    .videoView {
+        grid-template-columns: 1fr;
+        grid-template-rows: 10rem auto;
+    } 
+    .videoView__aside {
+        overflow-y: scroll;
+    }
   }
