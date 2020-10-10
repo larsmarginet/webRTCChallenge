@@ -33,6 +33,7 @@ import * as THREE from './three.module.js';
     const $endCall = document.querySelector('.videoView__videos__controls__end');
     const $login = document.querySelector('.loginView');
     const $form = document.querySelector('.loginView__innerWrapper__form');
+    const $noiseButton = document.querySelector('.videoView__videos__controls__noise');
 
     let socket;
     let myStream;
@@ -78,6 +79,7 @@ import * as THREE from './three.module.js';
             $otherName.textContent = clientList[peerId].name;
             $controls.classList.add("videoView__videos__controls--visible");
             $endCall.addEventListener('click', handleEndCall)
+            $noiseButton.addEventListener('click', handleClickNoise)
             console.log(`Received signal from ${peerId}`);
             console.log(signal);
             if (peer) {
@@ -137,8 +139,9 @@ import * as THREE from './three.module.js';
         uniform float iTime;
         uniform sampler2D iChannel0;  
         uniform sampler2D iChannel1;  
+        uniform bool playTexture; 
 
-        
+
 
         void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
             vec2 uv = fragCoord.xy / iResolution.xy;
@@ -151,8 +154,9 @@ import * as THREE from './three.module.js';
             
             vec2 offset = texture(iChannel1, vec2(fract(iTime * 2.0), fract(iTime)), 1.0).xy;
             
-            fragColor += texture(iChannel1, offset + uv, .1);
+            (playTexture == true) ? fragColor += texture(iChannel1, offset + uv, .1) : fragColor = c;
         }
+        
 
         void main() {
             mainImage(gl_FragColor, vUv * iResolution.xy);
@@ -174,7 +178,8 @@ import * as THREE from './three.module.js';
         iTime: { value: 0 },
         iResolution: { value: new THREE.Vector3(1, 1, 1) },
         iChannel0: { value: videoTexture },
-        iChannel1: { value: imageTexture }
+        iChannel1: { value: imageTexture },
+        playTexture: { value: false }
     };
 
     const material = new THREE.ShaderMaterial({
@@ -219,6 +224,10 @@ import * as THREE from './three.module.js';
 
     const handleEndCall = () => {
         peer.destroy();
+    }
+
+    const handleClickNoise = () => {
+        uniforms.playTexture.value = true;
     }
 
 
