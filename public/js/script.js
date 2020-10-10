@@ -6,7 +6,7 @@ import * as THREE from './three.module.js';
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
     const fov = 2;
-    const aspect = 2; // the canvas default
+    const aspect = 2;
     const near = 0.5;
     const far = 500;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -47,7 +47,6 @@ import * as THREE from './three.module.js';
             isLoggedIn = true;
             if (isLoggedIn) {
                 initSocket();
-                console.log("submitted form")
                 const constraints = { audio: true, video: { width: 1280, height: 720 } };
                 myStream = await navigator.mediaDevices.getUserMedia(constraints);
                 $myVideo.srcObject = myStream;
@@ -65,16 +64,11 @@ import * as THREE from './three.module.js';
     const audioRandomIntervals = noise => {
         if( noise === false ) {
             $otherVideo.muted = false;
-            //console.log(interval);
-            // if(interval) {
-            //     console.log(interval);
-            // }
             clearInterval(interval);
         } else {
             interval = setInterval(() => {
                 $otherVideo.muted = randomBoolean();
             }, 100);
-            console.log(interval);
         }
     }
 
@@ -89,9 +83,7 @@ import * as THREE from './three.module.js';
             $myName.textContent = name;
         });
         socket.on('noise', noise => {
-            console.log(noise);
             audioRandomIntervals(noise);
-            // clearInterval(interval);
             uniforms.playTexture.value = noise;
         })
         socket.on('clients', updatePeerList);
