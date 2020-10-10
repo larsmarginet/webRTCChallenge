@@ -33,6 +33,11 @@ io.on('connection', socket => {
     io.emit('clients', clients);
   });
 
+  socket.on('noise', noise => {
+    console.log(noise);
+    io.emit('noise', noise);
+  })
+
   socket.on('disconnect', () => {
     io.emit('client-disconnect', clients[socket.id]);
     delete clients[socket.id];

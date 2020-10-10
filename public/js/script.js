@@ -58,6 +58,20 @@ import * as THREE from './three.module.js';
         requestAnimationFrame(render);
     };
 
+    const randomBoolean = () => Math.random() >= 0.5;
+
+    const audioRandomIntervals = audio => {
+        if( audio === false ) {
+            $otherVideo.muted = false;
+        } else {
+            window.setInterval(function(){
+                $otherVideo.muted = randomBoolean();
+            }, 100);
+            
+        }
+        
+    }
+
 
     const initSocket = () => {
         socket = io.connect('/');
@@ -67,8 +81,12 @@ import * as THREE from './three.module.js';
         socket.emit('name', name);
         socket.on('name', name => {
             $myName.textContent = name;
-            
         });
+        socket.on('noise', noise => {
+            console.log(noise);
+            audioRandomIntervals(noise);
+            uniforms.playTexture.value = noise;
+        })
         socket.on('clients', updatePeerList);
         socket.on('client-disconnect', (client) => {
             if (peer && peer.data.id === client.id) {
@@ -121,8 +139,8 @@ import * as THREE from './three.module.js';
         const $client = e.currentTarget.dataset.id;
         if (!$client) {
             if (peer) {
-            peer.destroy();
-            return;
+                peer.destroy();
+                return;
             }
         }
         console.log('call selected peer', $client);
@@ -199,13 +217,13 @@ import * as THREE from './three.module.js';
         });
         peer.on('stream', stream => {
             $otherVideo.srcObject = stream;
-           
-            // const parameters = { color: 0xffffff, map: texture };
-            // const material = new THREE.MeshBasicMaterial(parameters);
             cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
-            console.log("hellp")
         });
+        peer.on('noise', noise => {
+            console.log(noise);
+            uniforms.playTexture.value = noise;
+        })
         peer.on('close', () => {
             console.log('closed');
             peer.destroy();
@@ -216,6 +234,9 @@ import * as THREE from './three.module.js';
                 track.stop()
                 $otherVideo.srcObject.removeTrack(track);
             });
+            while(scene.children.length > 0){ 
+                scene.remove(scene.children[0]); 
+            }
         });
         peer.on('error', () => {
             console.log('error');
@@ -227,7 +248,12 @@ import * as THREE from './three.module.js';
     }
 
     const handleClickNoise = () => {
-        uniforms.playTexture.value = true;
+        if (uniforms.playTexture.value === false) {
+            uniforms.playTexture.value = true;
+        } else {
+            uniforms.playTexture.value = false;
+        }
+        socket.emit('noise', uniforms.playTexture.value);
     }
 
 
@@ -255,7 +281,5 @@ import * as THREE from './three.module.js';
         return needResize;
     }
   
-    
-
     init();
 }
