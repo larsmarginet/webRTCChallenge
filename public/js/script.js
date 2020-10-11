@@ -1,7 +1,5 @@
 import * as THREE from './three.module.js';
 {
-    
-
     // Init Three scene
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
@@ -16,13 +14,6 @@ import * as THREE from './three.module.js';
 	light.position.set( 0.5, 1, 1 ).normalize();
     scene.add( light );
     const geometry = new THREE.PlaneGeometry( 25, 15, 1 );
-
-    // let cube;
-    
-
-    let isLoggedIn = false;
-    let name;
-
 
     const $myVideo = document.getElementById('myVideo');
     const $otherVideo = document.getElementById('otherVideo');
@@ -39,6 +30,9 @@ import * as THREE from './three.module.js';
     let myStream;
     let peer;
     let clientList = {};
+    let isLoggedIn = false;
+    let name;
+    let interval;
 
     const init = async () => {
         $form.addEventListener('submit', async e => {
@@ -59,8 +53,6 @@ import * as THREE from './three.module.js';
 
     const randomBoolean = () => Math.random() >= 0.5;
 
-    let interval
-
     const audioRandomIntervals = noise => {
         if( noise === false ) {
             $otherVideo.muted = false;
@@ -71,7 +63,6 @@ import * as THREE from './three.module.js';
             }, 100);
         }
     }
-
 
     const initSocket = () => {
         socket = io.connect('/');
@@ -146,51 +137,6 @@ import * as THREE from './three.module.js';
         createPeer(true, $client);
     };
 
-
-    // #include <common>
-    // varying vec2 vUv;
-    // uniform vec3 iResolution;
-    // uniform float iTime;
-    // uniform sampler2D iChannel0;  
-    // uniform sampler2D iChannel1;  
-    // uniform bool playTexture; 
-
-    // void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
-    //      vec2 uv = fragCoord.xy / iResolution.xy;
-    //      vec4 c = TEXTURE2D(iChannel0, (.5 + -.5 * 1.0 +  uv * 1.0), 1.0);
-    //      fragColor = c;
-    //      vec2 offset = TEXTURE2D(iChannel1, vec2(fract(iTime * 2.0), fract(iTime)), 1.0).xy;
-    //      (playTexture == true) ? fragColor += TEXTURE2D(iChannel1, offset + uv, .1) : fragColor = c;
-    // }
-
-    // void main() {
-    //     mainImage(gl_FragColor, vUv * iResolution.xy);
-    // }
-
-
-
-    // #include <common>
-    //     varying vec2 vUv;
-    //     uniform vec3 iResolution;
-    //     uniform float iTime;
-    //     uniform sampler2D iChannel0;  
-    //     uniform sampler2D iChannel1;  
-    //     uniform bool playTexture; 
-        
-    //     void mainImage( out vec4 fragColor, in vec2 fragCoord )
-    //     {
-            
-    //         vec2 uv = fragCoord.xy / iResolution.xy;
-    //         float r = fract(sin(dot((uv*iTime).xy ,vec2(12.9898,78.233))) * 43758.5453);
-    //         vec4 VI = gvec4 texture(iChannel0,uv);
-    //         VI*=r; 
-    //         fragColor = vec4(VI);
-    //     }
-    //     void main() {
-    //         mainImage(gl_FragColor, vUv * iResolution.xy);
-    //     }
-
-
     const fragmentShader = `
         #include <common>
         varying vec2 vUv;
@@ -246,7 +192,6 @@ import * as THREE from './three.module.js';
         uniforms,
     });
 
-
     const createPeer = (initiator, peerId) => {
         peer = new SimplePeer({ initiator, stream: myStream });
             peer.data = {
@@ -295,7 +240,6 @@ import * as THREE from './three.module.js';
         }
         socket.emit('noise', uniforms.playTexture.value);
     }
-
 
     const render = (time) => {
         time *= 0.001;
